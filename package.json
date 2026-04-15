@@ -1,0 +1,23 @@
+{
+  "name": "apex-trading-system",
+  "version": "4.0.0",
+  "private": true,
+  "description": "APEX Trading System v4.0 - ICT Analysis Platform",
+  "workspaces": [
+    "packages/shared",
+    "packages/server",
+    "packages/client"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n ENGINE,SERVER,CLIENT -c magenta,cyan,green \"npm run dev:engine\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:engine": "cd packages/engine && python3 -m uvicorn main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:server": "npm run dev -w packages/server",
+    "dev:client": "npm run dev -w packages/client",
+    "build": "npm run build -w packages/shared && npm run build -w packages/client",
+    "start": "bash start.sh"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.0"
+  }
+}

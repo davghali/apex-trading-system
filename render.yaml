@@ -1,0 +1,39 @@
+services:
+  # Python Analysis Engine
+  - type: web
+    name: apex-engine
+    runtime: python
+    buildCommand: cd packages/engine && pip install -r requirements.txt
+    startCommand: cd packages/engine && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TWELVE_DATA_API_KEY
+        sync: false
+      - key: FINNHUB_API_KEY
+        sync: false
+      - key: OANDA_API_KEY
+        sync: false
+      - key: ALPHA_VANTAGE_API_KEY
+        sync: false
+    plan: free
+
+  # Node.js Server + React Frontend
+  - type: web
+    name: apex-dashboard
+    runtime: node
+    buildCommand: npm install && cd packages/client && npx vite build
+    startCommand: cd packages/server && npx tsx src/index.ts
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENGINE_URL
+        fromService:
+          name: apex-engine
+          type: web
+          property: host
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_CHAT_ID
+        sync: false
+      - key: SERVE_STATIC
+        value: "true"
+    plan: free

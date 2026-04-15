@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-ict-bg text-ict-text font-sans antialiased;
+    overflow: hidden;
+  }
+
+  * {
+    @apply border-ict-border;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #0A0A0F;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2A2A4A;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3A3A5A;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2A2A4A #0A0A0F;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-ict-card/80 backdrop-blur-xl border border-ict-border/50 rounded-xl;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    @apply border-ict-accent/30 shadow-glow;
+  }
+
+  .text-gradient-accent {
+    @apply bg-gradient-to-r from-ict-accent to-cyan-300 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-bullish {
+    @apply bg-gradient-to-r from-ict-bullish to-green-300 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-bearish {
+    @apply bg-gradient-to-r from-ict-bearish to-red-300 bg-clip-text text-transparent;
+  }
+
+  .status-dot {
+    @apply w-2 h-2 rounded-full;
+    animation: statusPulse 2s ease-in-out infinite;
+  }
+
+  .status-dot-green {
+    @apply bg-ict-bullish;
+    box-shadow: 0 0 8px rgba(0, 200, 83, 0.6);
+  }
+
+  .status-dot-red {
+    @apply bg-ict-bearish;
+    box-shadow: 0 0 8px rgba(255, 23, 68, 0.6);
+  }
+
+  .status-dot-yellow {
+    @apply bg-ict-neutral;
+    box-shadow: 0 0 8px rgba(255, 214, 0, 0.6);
+  }
+
+  .killzone-bar {
+    @apply h-1.5 rounded-full overflow-hidden bg-ict-border/30;
+  }
+
+  .killzone-fill {
+    @apply h-full rounded-full transition-all duration-1000 ease-linear;
+    background: linear-gradient(90deg, #00BCD4, #00E5FF);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes statusPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
