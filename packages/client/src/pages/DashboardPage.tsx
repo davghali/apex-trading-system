@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import TradingCoach from '@/components/dashboard/TradingCoach';
 import BiasWidget from '@/components/dashboard/BiasWidget';
 import StructureWidget from '@/components/dashboard/StructureWidget';
 import POIWidget from '@/components/dashboard/POIWidget';
@@ -134,16 +135,62 @@ export default function DashboardPage() {
         }
       } catch (e) { console.warn('[Dashboard] POI update failed:', e); }
 
-      // Session
+      // Session - transform API shape to match store KillzoneInfo schema
       try {
         const session = data.session || {};
+        const setNextKillzone = useStore.getState().setNextKillzone;
         if (session.current_session && setCurrentKillzone) {
+          const sessionName = String(session.current_session);
+          const kzNameMap: Record<string, string> = {
+            'LONDON_KZ': 'LONDON',
+            'NY_KZ': 'NY_AM',
+            'NY_AM_KZ': 'NY_AM',
+            'NY_PM_KZ': 'NY_PM',
+            'ASIAN_KZ': 'ASIAN',
+            'ASIAN': 'ASIAN',
+            'POST_SESSION': 'NONE',
+            'OFF_SESSION': 'NONE',
+          };
+          const mappedName = (kzNameMap[sessionName] || sessionName.replace('_KZ', '')) as any;
+          const labelMap: Record<string, string> = {
+            'LONDON': 'London Killzone',
+            'NY_AM': 'New York AM',
+            'NY_PM': 'New York PM',
+            'ASIAN': 'Asian Session',
+            'NONE': 'Off Session',
+          };
           setCurrentKillzone({
-            name: session.current_session,
-            active: session.is_active || false,
-            timeRemaining: session.time_remaining || 0,
-            progress: session.progress || 0,
+            name: mappedName,
+            label: labelMap[mappedName] || sessionName,
+            start: '',
+            end: '',
+            active: Boolean(session.is_active),
+            progress: Number(session.progress) || 0,
+            remainingSeconds: (Number(session.time_remaining) || 0) * 60, // API sends minutes
+            model: 'CLASSIC' as any,
+            characteristics: [],
           });
+        }
+        // Next killzone
+        if (session.next_session && setNextKillzone) {
+          const nextName = String(session.next_session);
+          const kzNameMap: Record<string, string> = {
+            'LONDON_KZ': 'LONDON',
+            'NY_KZ': 'NY_AM',
+            'NY_AM_KZ': 'NY_AM',
+            'NY_PM_KZ': 'NY_PM',
+            'ASIAN_KZ': 'ASIAN',
+          };
+          const mappedNext = (kzNameMap[nextName] || nextName.replace('_KZ', '')) as any;
+          setNextKillzone({
+            name: mappedNext,
+            label: String(mappedNext).replace('_', ' '),
+            startsIn: (Number(session.next_session_in) || 0) * 60, // API sends minutes
+          });
+        }
+        // Skip legacy code below
+        if (false) {
+          setCurrentKillzone({ name: 'NONE', label: '', start: '', end: '', active: false, progress: 0, remainingSeconds: 0, model: 'NONE', characteristics: [] } as any);
         }
       } catch (e) { console.warn('[Dashboard] Session update failed:', e); }
 
@@ -256,7 +303,12 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Row 1: Bias + Structure + KZ */}
+      {/* ⭐ TRADING COACH - DIT QUOI FAIRE MAINTENANT ⭐ */}
+      <motion.div variants={itemVariants}>
+        <TradingCoach />
+      </motion.div>
+
+      {/* Details techniques (pour aller plus loin) */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <BiasWidget />
         <StructureWidget />
