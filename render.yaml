@@ -3,8 +3,9 @@ services:
   - type: web
     name: apex-engine
     runtime: python
-    buildCommand: cd packages/engine && pip install -r requirements.txt
-    startCommand: cd packages/engine && uvicorn main:app --host 0.0.0.0 --port $PORT
+    rootDir: packages/engine
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: TWELVE_DATA_API_KEY
         sync: false
@@ -14,6 +15,8 @@ services:
         sync: false
       - key: ALPHA_VANTAGE_API_KEY
         sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.0"
     plan: free
 
   # Node.js Server + React Frontend
@@ -29,11 +32,11 @@ services:
         fromService:
           name: apex-engine
           type: web
-          property: host
+          envVarKey: RENDER_EXTERNAL_URL
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_CHAT_ID
         sync: false
-      - key: SERVE_STATIC
-        value: "true"
+      - key: NODE_VERSION
+        value: "20.20.2"
     plan: free
