@@ -59,12 +59,25 @@ export default function DashboardPage() {
         }
       } catch (e) { console.warn('[Dashboard] Price update failed:', e); }
 
-      // Bias
+      // Bias - transform API shape (bias/phase) to store shape (direction/current)
       try {
-        const bias = data.bias || {};
-        if (bias.weekly && updateWeeklyBias) updateWeeklyBias(bias.weekly);
-        if (bias.daily && updateDailyBias) updateDailyBias(bias.daily);
-        if (bias.po3 && updatePO3) updatePO3(bias.po3);
+        const biasData = data.bias || {};
+        const mapBias = (b: any) => ({
+          direction: (b.bias || 'NEUTRAL') as any,
+          score: Number(b.score) || 0,
+          conviction: (b.conviction || 'LOW') as any,
+          factors: Array.isArray(b.factors) ? b.factors : [],
+        });
+        if (biasData.weekly && updateWeeklyBias) updateWeeklyBias(mapBias(biasData.weekly));
+        if (biasData.daily && updateDailyBias) updateDailyBias(mapBias(biasData.daily));
+        if (biasData.po3 && updatePO3) {
+          const phase = biasData.po3.phase || 'NONE';
+          const mapped = (['ACCUMULATION', 'MANIPULATION', 'DISTRIBUTION'].includes(phase) ? phase : 'NONE') as any;
+          updatePO3({
+            current: mapped,
+            confidence: Number(biasData.po3.confidence) || 0,
+          });
+        }
       } catch (e) { console.warn('[Dashboard] Bias update failed:', e); }
 
       // Structure
@@ -74,11 +87,51 @@ export default function DashboardPage() {
         if (struct.alignment && updateAlignment) updateAlignment(struct.alignment);
       } catch (e) { console.warn('[Dashboard] Structure update failed:', e); }
 
-      // POIs
+      // POIs - transform API shape to store shape
       try {
-        const pois = data.pois || {};
-        if (pois.pois && setPOIs) setPOIs(pois.pois);
-        if (pois.liquidity_map && updateLiquidityMap) updateLiquidityMap(pois.liquidity_map);
+        const poisData = data.pois || {};
+        if (poisData.pois && setPOIs) {
+          const currentPrice = Number(data.current_price) || 0;
+          const transformedPois = (poisData.pois as any[]).map((p, i) => {
+            const typeMap: Record<string, string> = {
+              'FVG': 'FVG', 'ORDER_BLOCK': 'OB', 'EXTREME_OB': 'OB',
+              'BREAKER_BLOCK': 'BB', 'PROPULSION_BLOCK': 'OB',
+              'SUPER_ZONE': 'OB', 'INVERSE_FVG': 'FVG',
+            };
+            const priceHigh = Number(p.high ?? p.price_high ?? 0);
+            const priceLow = Number(p.low ?? p.price_low ?? 0);
+            return {
+              id: String(p.id ?? `${p.type}-${p.timeframe}-${i}`),
+              type: (typeMap[p.type] || 'OB') as any,
+              side: (p.direction === 'bullish' ? 'BUY' : 'SELL') as any,
+              priceHigh,
+              priceLow,
+              timeframe: p.timeframe || '',
+              strength: Number(p.quality_score ?? 50),
+              mitigated: Boolean(p.mitigated || p.status === 'MITIGATED'),
+              distance: currentPrice > 0 ? Math.abs((priceHigh + priceLow) / 2 - currentPrice) : 0,
+              label: p.type,
+            };
+          });
+          setPOIs(transformedPois);
+        }
+        if (poisData.liquidity_map && updateLiquidityMap) {
+          const lm = poisData.liquidity_map;
+          updateLiquidityMap({
+            bsl: (lm.buy_side_liquidity || []).map((l: any) => ({
+              price: Number(l.level ?? 0),
+              type: (l.type && l.type.includes('EQH') ? 'EQH' : 'BSL') as any,
+              strength: l.significance === 'EXTREME' ? 100 : l.significance === 'VERY_HIGH' ? 80 : l.significance === 'HIGH' ? 60 : 40,
+              swept: Boolean(l.swept),
+            })),
+            ssl: (lm.sell_side_liquidity || []).map((l: any) => ({
+              price: Number(l.level ?? 0),
+              type: (l.type && l.type.includes('EQL') ? 'EQL' : 'SSL') as any,
+              strength: l.significance === 'EXTREME' ? 100 : l.significance === 'VERY_HIGH' ? 80 : l.significance === 'HIGH' ? 60 : 40,
+              swept: Boolean(l.swept),
+            })),
+          });
+        }
       } catch (e) { console.warn('[Dashboard] POI update failed:', e); }
 
       // Session
@@ -94,9 +147,25 @@ export default function DashboardPage() {
         }
       } catch (e) { console.warn('[Dashboard] Session update failed:', e); }
 
-      // Confluence
+      // Confluence - transform API shape to store shape
       try {
-        if (data.confluence && updateConfluence) updateConfluence(data.confluence);
+        const conf = data.confluence;
+        if (conf && updateConfluence) {
+          const cats = conf.categories || {};
+          const categoriesArray = [
+            { name: 'Structure & Bias', score: cats.A_STRUCTURE_BIAS || 0, maxScore: 25, weight: 0.25, details: [] },
+            { name: 'POI Quality', score: cats.B_POI_QUALITY || 0, maxScore: 25, weight: 0.25, details: [] },
+            { name: 'Entry Confirmation', score: cats.C_ENTRY_CONFIRMATION || 0, maxScore: 20, weight: 0.20, details: [] },
+            { name: 'Timing & Session', score: cats.D_TIMING_SESSION || 0, maxScore: 15, weight: 0.15, details: [] },
+            { name: 'Risk Factors', score: cats.E_RISK_FACTORS || 0, maxScore: 15, weight: 0.15, details: [] },
+          ];
+          updateConfluence({
+            score: conf.total_score || 0,
+            grade: conf.grade || 'F',
+            recommendation: conf.recommendation || 'Analyse en cours...',
+            categories: categoriesArray,
+          });
+        }
       } catch (e) { console.warn('[Dashboard] Confluence update failed:', e); }
 
       // DXY
