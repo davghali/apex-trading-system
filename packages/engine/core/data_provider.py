@@ -617,12 +617,20 @@ class DataProvider:
             base = base_prices.get(instrument, 1.0)
             vol = volatilities.get(instrument, 0.001)
             interval = TF_SECONDS.get(timeframe, 3600)
-            now = int(time.time())
+
+            # IMPORTANT: Aligner 'now' sur le debut de la TF courante pour stabilite
+            # Ca evite que le biais change toutes les minutes
+            raw_now = int(time.time())
+            now = (raw_now // interval) * interval  # Floor sur interval de la TF
+
             candles = []
             price = base
 
-            # Etat du marche pour la generation
-            rng = random.Random(hash(f"{instrument}_{timeframe}_apex"))  # Seed deterministe mais unique
+            # Seed deterministe base sur la DATE (jour) + instrument + TF
+            # => Les bougies sont stables pendant toute la journee
+            from datetime import datetime, timezone
+            day_key = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            rng = random.Random(hash(f"{instrument}_{timeframe}_{day_key}_apex"))
             trend = 0.0          # Direction de la tendance (-1 a +1)
             trend_duration = 0   # Bougies restantes dans la tendance actuelle
             cycle_phase = 0.0    # Phase du cycle de marche (0 a 2*pi)
