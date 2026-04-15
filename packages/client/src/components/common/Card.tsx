@@ -32,9 +32,10 @@ export default function Card({
 }: CardProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      style={{ opacity: 1 }}
       onClick={onClick}
       className={`
         relative overflow-hidden rounded-xl

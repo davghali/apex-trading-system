@@ -16,11 +16,11 @@ import { Crosshair, ArrowUpRight, ArrowDownRight, RefreshCw, Loader2 } from 'luc
 import api from '@/services/api';
 
 const containerVariants = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+  hidden: { opacity: 1 },
+  show: { opacity: 1 },
 };
 const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { opacity: 1, y: 0 },
   show: { opacity: 1, y: 0 },
 };
 

@@ -38,11 +38,11 @@ const CACHE_TTL = {
   SCAN: 2 * 60 * 1000,         // 2 min
 } as const;
 
-// ── Retry configuration ─────────────────────────────────────
+// ── Retry configuration (augmentee pour cold start Render) ──
 const RETRY_CONFIG = {
-  maxRetries: 3,
-  baseDelayMs: 1000,
-  maxDelayMs: 10000,
+  maxRetries: 5,
+  baseDelayMs: 2000,
+  maxDelayMs: 15000,
   retryableStatuses: new Set([408, 429, 500, 502, 503, 504]),
 } as const;
 
@@ -61,7 +61,7 @@ class EngineClient {
   constructor() {
     this.client = axios.create({
       baseURL: env.ENGINE_URL,
-      timeout: 30_000,
+      timeout: 90_000, // 90s pour cold start Render
       headers: { 'Content-Type': 'application/json' },
     });
 
