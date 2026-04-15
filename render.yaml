@@ -23,7 +23,7 @@ services:
   - type: web
     name: apex-dashboard
     runtime: node
-    buildCommand: npm install --include=dev && cd packages/client && npx vite build
+    buildCommand: npm install && cd packages/client && npx vite build
     startCommand: cd packages/server && npx tsx src/index.ts
     envVars:
       - key: NODE_ENV
